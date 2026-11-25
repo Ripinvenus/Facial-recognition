@@ -33,8 +33,8 @@ Esta aplicación verifica la identidad de las personas mediante **reconocimiento
 
 - Muestra el video de la cámara en tiempo real.
 - Detecta rostros y dibuja un recuadro sobre ellos:
-  - 🟩 **Verde con el nombre**: persona autorizada.
-  - 🟥 **Rojo con "NO AUTORIZADO"**: rostro desconocido o sin permiso.
+  - ✅ **Verde con el nombre**: persona autorizada.
+  - 🔴 **Rojo con "NO AUTORIZADO"**: rostro desconocido o sin permiso.
 - Permite **dar de alta** (registrar) y **dar de baja** (revocar) personas desde un panel protegido por contraseña.
 - Guarda un **registro histórico** de todos los intentos de acceso.
 
@@ -46,7 +46,7 @@ La contraseña de fábrica es:
 123
 ```
 
-> ⚠️ Es un valor de prueba. Cámbialo antes de usar el sistema en un entorno real (consulta la sección [9](#9-configuración-avanzada)).
+> ⚠️ Es un valor de prueba para fines practicos se defino este .
 
 ---
 

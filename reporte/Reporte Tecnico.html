@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte Técnico — Control de Acceso Biométrico</title>
+<style>
+  @page { size: A4; margin: 1.2cm 1.2cm 1.2cm 1.2cm; }
+  body { font-family: "DejaVu Serif", serif; font-size: 10.5pt; line-height: 1.45; color: #181818; }
+  h1 { font-family: "DejaVu Sans", sans-serif; font-size: 19pt; color: #1F4E79; margin: 0 0 0.4em 0; }
+  h2 { font-family: "DejaVu Sans", sans-serif; font-size: 14pt; color: #1F4E79;
+       border-bottom: 2px solid #1F4E79; padding-bottom: 3px; margin-top: 1.4em; }
+  h3 { font-family: "DejaVu Sans", sans-serif; font-size: 11.5pt; color: #2C3E50; margin: 1.1em 0 0.4em 0; }
+  p  { text-align: justify; margin: 0.45em 0; }
+  ul, ol { margin: 0.4em 0 0.4em 1.4em; }
+  li { margin: 0.2em 0; text-align: justify; }
+  table { border-collapse: collapse; width: 100%; font-size: 9pt; margin: 0.8em 0; }
+  th, td { border: 1px solid #9AA5B1; padding: 5px 6px; vertical-align: top; text-align: left; }
+  th { background: #DCE6F1; font-family: "DejaVu Sans", sans-serif; font-weight: bold; }
+  figure { margin: 1.0em 0; page-break-inside: avoid; text-align: center; }
+  img { display: block; margin: 0 auto; max-width: 100%; }
+  .pie { font-size: 9pt; font-style: italic; color: #444; margin: 4px 0 10px 0; text-align: center; }
+  pre { background: #F4F6F7; border: 1px solid #B7C0C8; padding: 9px 11px;
+        font-family: "DejaVu Sans Mono", monospace; font-size: 8.2pt; line-height: 1.35;
+        white-space: pre-wrap; page-break-inside: avoid; }
+  .portada { text-align: center; page-break-after: always; margin-top: 4.5cm; }
+  .portada h1 { font-size: 24pt; line-height: 1.25; }
+  .portada h2 { font-size: 14pt; color: #34495E; border: none; }
+  .portada p { text-align: center; }
+  .salto { page-break-before: always; }
+  .etiqueta { font-family: "DejaVu Sans", sans-serif; font-size: 9pt; color: #566573; }
+  .nota { background: #FFF8E1; border-left: 4px solid #E1B12C; padding: 8px 10px; margin: 0.8em 0; }
+  .enlace { font-family: "DejaVu Sans Mono", monospace; font-size: 8.5pt; word-wrap: break-word; }
+  a { color: #1F4E79; }
+</style>
+</head>
+<body>
+
+<div class="portada">
+  <p class="etiqueta">DOCUMENTO TÉCNICO DEL PROYECTO</p>
+  <h1>Reporte Técnico del Sistema de Control de Acceso Biométrico mediante Reconocimiento Facial</h1>
+  <h2>Proyecto: Facial-recognition</h2>
+  <p>Modalidad: aplicación de escritorio multiplataforma con interfaz gráfica</p>
+  <p>&nbsp;</p>
+  <p><strong>Contenido:</strong> fundamentos, diseño, implementación, resultados y recursos del sistema</p>
+  <p>&nbsp;</p>
+  <p>Noviembre de 2026</p>
+</div>
+
+<h2>1. Introducción</h2>
+
+<p>El control de acceso es una de las aplicaciones más extendidas de la biometría. A diferencia de las
+credenciales tradicionales —contraseñas, tarjetas o llaves—, las características biométricas no pueden
+olvidarse, perderse ni transferirse con facilidad. Entre ellas, el rostro destaca por ser no invasivo,
+observable a distancia y aceptado socialmente, lo que ha permitido su adopción en teléfonos, aeropuertos,
+oficinas y sistemas de vigilancia.</p>
+
+<p>Este trabajo presenta el desarrollo de una aplicación de escritorio que verifica en tiempo real si una
+persona tiene autorización para acceder, empleando reconocimiento facial sobre el video de una cámara web.
+La interfaz indica de manera explícita el resultado —<strong>AUTORIZADO</strong> o
+<strong>NO AUTORIZADO</strong>— y ofrece un panel protegido para dar de alta y de baja a las personas.
+Además, cada intento se conserva en un registro local con fecha, hora, identidad estimada y distancia de
+coincidencia.</p>
+
+<p>El sistema se ejecuta íntegramente en la computadora del usuario: no existe envío de imágenes ni de datos
+a servicios externos. Las firmas faciales y las fotografías de referencia se almacenan en archivos locales,
+y la ruta de acceso se protege con una contraseña almacenada como hash.</p>
+
+<h3>1.1 Objetivo general</h3>
+<p>Diseñar e implementar un sistema de autenticación biométrica facial con interfaz gráfica, capaz de
+indicar en tiempo real el estado de autorización de una persona y de administrar el acceso de los usuarios
+desde un panel seguro, funcionando en distintos entornos operativos.</p>
+
+<h3>1.2 Objetivos específicos</h3>
+<ul>
+  <li>Establecer los fundamentos teóricos del reconocimiento facial y de la comparación de firmas biométricas.</li>
+  <li>Analizar antecedentes y la evolución histórica de las técnicas empleadas.</li>
+  <li>Diseñar una arquitectura modular que separe captura, procesamiento, persistencia e interfaz.</li>
+  <li>Implementar la verificación en vivo con un modelo de detección robusto a inclinación y baja iluminación.</li>
+  <li>Implementar las operaciones de alta, baja y consulta del registro de accesos.</li>
+  <li>Evaluar el funcionamiento del sistema mediante pruebas unitarias y pruebas de ejecución real.</li>
+</ul>
+
+<h3>1.3 Alcance</h3>
+<p>El alcance comprende el desarrollo de la aplicación de escritorio, la administración local de las
+personas autorizadas y el registro de intentos. No se incluyen autenticación en red, bases de datos
+remotas, detección de vida (anti-<em>spoofing</em>) ni integración con dispositivos de control físico.</p>
+
+<h3>1.4 Estructura del documento</h3>
+<p>Tras esta introducción se presentan los fundamentos teóricos y los antecedentes históricos. Se describe
+después la metodología de diseño, la implementación de cada componente y los resultados obtenidos. Se cierra
+con el análisis, las conclusiones, las referencias y los enlaces a los recursos del proyecto.</p>
+
+<h2>2. Fundamentos Teóricos</h2>
+
+<h3>2.1 Biometría y autenticación</h3>
+<p>La biometría es la identificación de personas a partir de rasgos fisiológicos o conductivos medibles.
+Un sistema biométrico opera en dos fases: <em>inscripción</em> (registro de la característica de referencia)
+y <em>verificación o identificación</em> (comparación de una nueva muestra contra la referencia). En este
+proyecto se realiza verificación uno a uno contra un conjunto de firmas almacenadas: para cada rostro
+detectado se calcula la distancia a todas las firmas conocidas y se acepta la identidad de la menor
+distancia siempre que no supere un umbral.</p>
+
+<h3>2.2 Detección y reconocimiento: dos problemas distintos</h3>
+<p>La <strong>detección</strong> localiza la posición de los rostros dentro de una imagen, devolviendo
+normalmente un rectángulo delimitador. El <strong>reconocimiento</strong> determina de quién se trata.
+El sistema resuelve ambos en secuencia: primero detecta y después extrae la firma de la región detectada.
+Separar las etapas permite dibujar el recuadro incluso cuando no existe ninguna persona registrada.</p>
+
+<h3>2.3 Firmas faciales y distancia euclidiana</h3>
+<p>Una red convolucional transforma una imagen de rostro alineada en un vector de 128 valores reales,
+denominado <em>embedding</em> o firma facial. Rostros de la misma persona producen vectores cercanos en ese
+espacio, mientras que rostros distintos tienden a separarse. La similitud se mide con la distancia euclidiana
+(L2) entre vectores: a menor distancia, mayor similitud. Se define un umbral de decisión
+(<em>tolerancia</em>) de 0.55 por defecto, ajustable según el entorno.</p>
+
+<h3>2.4 Modelos de detección: HOG frente a CNN</h3>
+<p>El detector HOG (Histograma de Gradientes Orientados) es un descriptor clásico, rápido y de bajo consumo,
+pero sensible a cambios de pose, inclinación e iluminación. El detector basado en red convolucional (CNN)
+es más costoso computacionalmente, pero significativamente más robusto. En las pruebas preliminares de este
+proyecto, HOG no detectó un rostro inclinado y parcialmente sombreado en ninguna escala evaluada, mientras
+que CNN lo detectó correctamente. Por ello se adoptó CNN como modelo principal, con HOG como mecanismo de
+respaldo si el modelo no está disponible.</p>
+
+<h3>2.5 Concurrencia e interfaz de usuario</h3>
+<p>La captura de video, el análisis de imágenes y el dibujo de la interfaz son tareas con tiempos muy
+distintos. Si se ejecutaran en un único hilo, la detección bloquearía la ventana y la aplicación parecería
+congelada. Se emplea por tanto un modelo de tres hilos: un hilo productor que lee la cámara, un hilo
+consumidor que analiza los frames y el hilo principal de Tkinter que solo presenta el último resultado.
+El acceso al frame compartido se protege con un mecanismo de exclusión mutua.</p>
+
+<h3>2.6 Persistencia y privacidad</h3>
+<p>Las firmas se serializan en un archivo local y las imágenes de referencia se guardan en una carpeta
+dedicada. Esta decisión simplifica el respaldo y el traslado del sistema entre equipos. Como contrapartida,
+la seguridad depende del control físico y de permisos del sistema operativo sobre esos archivos, por lo que
+se recomienda no versionarlos y restringir su acceso.</p>
+
+<h2>3. Antecedentes e Historia</h2>
+
+<p>El reconocimiento facial tiene sus raíces en la antropometría criminalística del siglo XIX. Con el tiempo,
+las técnicas manuales dieron paso a métodos automáticos y, finalmente, al aprendizaje profundo. La tabla
+siguiente resume los hitos más relevantes para este proyecto.</p>
+
+<table>
+  <tr><th>Época</th><th>Hito</th><th>Aporte</th></tr>
+  <tr><td>Década de 1880</td><td>Sistema antropométrico de Bertillon</td><td>Primera codificación sistemática de rasgos corporales para identificación.</td></tr>
+  <tr><td>Inicio del siglo XX</td><td>Huellas dactilares</td><td>Consolidación de la biometría como herramienta de identificación policial.</td></tr>
+  <tr><td>Década de 1970</td><td>Trabajos pioneros de Kanade</td><td>Primeros algoritmos automáticos de localización de rasgos faciales.</td></tr>
+  <tr><td>1991</td><td><em>Eigenfaces</em> (Turk y Pentland)</td><td>Reducción dimensional mediante análisis de componentes principales.</td></tr>
+  <tr><td>2001</td><td>Detector Viola–Jones</td><td>Detección de rostros en tiempo real mediante cascadas de clasificadores.</td></tr>
+  <tr><td>2009</td><td>Biblioteca dlib</td><td>Conjunto de herramientas de visión por computadora y aprendizaje automático.</td></tr>
+  <tr><td>2012</td><td>Auge del aprendizaje profundo</td><td>Mejora sustancial de precisión gracias a redes convolucionales y grandes datos.</td></tr>
+  <tr><td>2015</td><td>FaceNet</td><td>Popularización de los <em>embeddings</em> faciales y la distancia L2 para comparación.</td></tr>
+  <tr><td>2017</td><td>Biblioteca <em>face_recognition</em></td><td>API sencilla que integra detección, alineamiento y firmas faciales en Python.</td></tr>
+  <tr><td>Actualidad</td><td>Aplicaciones de escritorio accesibles</td><td>Posibilidad de construir sistemas biométricos locales con hardware modesto.</td></tr>
+</table>
+
+<p>La evolución descrita explica las decisiones técnicas del presente trabajo: se aprovechan bibliotecas
+maduras que encapsulan modelos complejos, de modo que el esfuerzo se centre en el diseño del sistema, la
+experiencia de usuario y la robustez de la verificación, sin reimplementar detectores ni redes neuronales.</p>
+
+<h2 class="salto">4. Metodología</h2>
+
+<h3>4.1 Tipo de investigación y enfoque</h3>
+<p>Se trata de una investigación aplicada de carácter descriptivo-explicativo, orientada a la construcción
+de un artefacto funcional. El proceso se desarrolló en forma incremental: primero se definieron los
+requisitos, después se construyó un prototipo mínimo de detección, se incorporaron la persistencia y la
+interfaz, y finalmente se añadieron el panel administrativo y el registro de accesos. Cada incremento se
+verificó mediante ejecución real y pruebas automatizadas.</p>
+
+<h3>4.2 Requisitos funcionales y no funcionales</h3>
+
+<table>
+  <tr><th>ID</th><th>Requisito</th><th>Tipo</th></tr>
+  <tr><td>RF1</td><td>Mostrar el video de la cámara en la interfaz gráfica.</td><td>Funcional</td></tr>
+  <tr><td>RF2</td><td>Detectar rostros y señalar si la persona está autorizada.</td><td>Funcional</td></tr>
+  <tr><td>RF3</td><td>Permitir dar de alta personas mediante captura de imágenes.</td><td>Funcional</td></tr>
+  <tr><td>RF4</td><td>Permitir dar de baja personas y revocar su acceso.</td><td>Funcional</td></tr>
+  <tr><td>RF5</td><td>Registrar cada intento de acceso con fecha, hora y resultado.</td><td>Funcional</td></tr>
+  <tr><td>RF6</td><td>Proteger el panel administrativo con contraseña.</td><td>Funcional</td></tr>
+  <tr><td>RNF1</td><td>Funcionar en Windows, Linux y macOS sin rutas absolutas.</td><td>No funcional</td></tr>
+  <tr><td>RNF2</td><td>Mantener la interfaz fluida durante el análisis de video.</td><td>No funcional</td></tr>
+  <tr><td>RNF3</td><td>Guardar los datos localmente, sin servicios externos.</td><td>No funcional</td></tr>
+  <tr><td>RNF4</td><td>Liberar correctamente la cámara al cerrar o al capturar fotos.</td><td>No funcional</td></tr>
+</table>
+
+<h3>4.3 Arquitectura propuesta</h3>
+<p>El sistema se organiza en capas independientes. La capa de captura obtiene los frames; la capa de
+procesamiento detecta, compara y anota; la capa de persistencia administra firmas, fotografías y registro;
+y la capa de presentación contiene la pantalla principal y el panel de gestión. La configuración es un
+componente transversal consultado por todas las capas. Esta separación facilita la sustitución de cualquier
+módulo sin afectar a los demás.</p>
+
+<p align="center"><img src="figura1_arquitectura.png" alt="Diagrama de arquitectura del sistema"></p>
+<p align="center" class="pie">Figura 1. Arquitectura general del sistema y relación entre sus componentes.</p>
+
+<p>Como se observa en la Figura 1, la cámara alimenta al capturador en hilo, que entrega los frames al
+procesador. El reconocedor consulta las firmas almacenadas y produce el resultado anotado que muestra la
+interfaz. Paralelamente, el panel de gestión modifica el almacenamiento y provoca la recarga del
+reconocedor, mientras que el procesador escribe los eventos en el registro de accesos.</p>
+
+<h3>4.4 Herramientas y entorno</h3>
+<table>
+  <tr><th>Herramienta</th><th>Función en el proyecto</th></tr>
+  <tr><td>Python 3.12</td><td>Lenguaje de implementación.</td></tr>
+  <tr><td>face_recognition y dlib</td><td>Detección de rostros, firmas faciales y comparación.</td></tr>
+  <tr><td>OpenCV</td><td>Adquisición de video, manejo de frames y anotaciones.</td></tr>
+  <tr><td>Tkinter / ttk</td><td>Interfaz gráfica multiplataforma.</td></tr>
+  <tr><td>NumPy y Pillow</td><td>Operaciones con arreglos y conversión de imágenes.</td></tr>
+  <tr><td>Git y GitHub</td><td>Control de versiones y publicación del proyecto.</td></tr>
+</table>
+
+<h3>4.5 Algoritmo general de verificación</h3>
+<p>El siguiente pseudocódigo resume la lógica aplicada a cada frame analizado. Se muestra de forma
+independiente del lenguaje de programación para facilitar su comprensión.</p>
+
+<pre>
+ALGORITMO VerificarAcceso
+ENTRADA: frame proveniente de la cámara
+SALIDA: frame anotado, lista de estados
+
+1  copia ← copia del frame
+2  reducido ← reducir frame al 25 % de su tamaño
+3  RGB ← convertir reducido a espacio de color RGB
+4  rostros ← detectar rostros con modelo CNN sobre RGB
+5  SI rostros está vacío ENTONCES
+6      RETORNAR copia, lista vacía
+7  FIN SI
+8  PARA CADA rostro EN rostros HACER
+9      coordenadas ← escalar el rectángulo al tamaño original
+10     firma ← calcular firma facial sobre el frame completo en coordenadas
+11     SI existen firmas registradas ENTONCES
+12         distancias ← distancia de firma contra cada firma registrada
+13         mejor ← índice de la menor distancia
+14         autorizado ← (distancia[mejor] ≤ TOLERANCIA)
+15         nombre ← nombre registrado[mejor] SI autorizado, "Desconocido" EN OTRO CASO
+16     SINO
+17         autorizado ← FALSO; nombre ← "Desconocido"
+18     FIN SI
+19     dibujar rectángulo verde si autorizado, rojo en caso contrario
+20     dibujar etiqueta con nombre o "NO AUTORIZADO"
+21     añadir estado a la lista
+22 FIN PARA
+23 RETORNAR copia, lista de estados
+</pre>
+
+<h2 class="salto">5. Implementación</h2>
+
+<h3>5.1 Organización de módulos</h3>
+<table>
+  <tr><th>Módulo</th><th>Responsabilidad principal</th></tr>
+  <tr><td>config</td><td>Rutas relativas, parámetros de cámara, tolerancia, modelo de detección y hash de la contraseña.</td></tr>
+  <tr><td>almacenamiento</td><td>Cargar, guardar y eliminar firmas y fotografías de referencia.</td></tr>
+  <tr><td>reconocedor</td><td>Detectar rostros, calcular firmas, comparar y anotar el frame.</td></tr>
+  <tr><td>camara</td><td>Abrir el dispositivo con reintentos y mantener el último frame en un hilo.</td></tr>
+  <tr><td>procesador</td><td>Consumir frames, ejecutar el reconocimiento y registrar cambios de estado.</td></tr>
+  <tr><td>registro</td><td>Escribir y leer el archivo de historial de accesos.</td></tr>
+  <tr><td>app_principal</td><td>Ventana principal, visualización de video e indicador de estado.</td></tr>
+  <tr><td>panel_personas</td><td>Control de contraseña, altas, bajas y visor de registro.</td></tr>
+</table>
+
+<h3>5.2 Flujo de verificación en vivo</h3>
+<p>La Figura 2 detalla el ciclo ejecutado por el hilo de análisis. El proceso comienza con la lectura del
+último frame disponible y solo realiza la detección sobre una versión reducida de la imagen, lo que disminuye
+el costo computacional. Las coordenadas obtenidas se reescalan antes de calcular la firma sobre la imagen
+completa, preservando precisión. Las ramas negativas de las decisiones conducen a esperar un nuevo frame o a
+mostrar el estado correspondiente, según el caso.</p>
+
+<p align="center"><img src="figura2_flujo_verificacion.png" alt="Diagrama de flujo de la verificación en vivo"></p>
+<p align="center" class="pie">Figura 2. Diagrama de flujo del proceso de verificación en vivo y de escritura en el registro.</p>
+
+<h3>5.3 Flujo de administración de accesos</h3>
+<p>La Figura 3 describe las operaciones disponibles en el panel. El acceso se condiciona a la verificación
+de la contraseña. Una vez dentro, las opciones de alta y baja modifican el almacenamiento y fuerzan la
+recarga de las firmas en memoria, de modo que el cambio surte efecto sin reiniciar la aplicación. La opción
+de registro es de solo lectura.</p>
+
+<p align="center"><img src="figura3_gestion.png" alt="Diagrama de flujo de gestión de personas"></p>
+<p align="center" class="pie">Figura 3. Flujo del panel de gestión: autenticación, altas, bajas y consulta del registro.</p>
+
+<h3>5.4 Formato de datos y decisiones de diseño</h3>
+<ul>
+  <li><strong>Firmas:</strong> se conservan dos listas paralelas, una de nombres y otra de vectores de 128
+      componentes; una persona puede tener varias firmas, una por captura.</li>
+  <li><strong>Fotografías:</strong> se almacena una imagen de referencia por persona con un nombre de archivo
+      normalizado, sin caracteres problemáticos entre plataformas.</li>
+  <li><strong>Registro:</strong> archivo de texto con una línea por evento; el formato legible facilita su
+      revisión sin herramientas especiales.</li>
+  <li><strong>Contraseña:</strong> se guarda únicamente su hash con sal; la comparación se realiza en tiempo
+      constante para evitar filtraciones por tiempo de respuesta.</li>
+  <li><strong>Portabilidad:</strong> todas las rutas se construyen a partir de la ubicación del archivo de
+      configuración; el backend de captura se selecciona según el sistema operativo.</li>
+  <li><strong>Recuperación ante fallos:</strong> la apertura de cámara se reintenta varias veces con una breve
+      pausa, porque algunos sistemas tardan en liberar el dispositivo después de cerrarlo.</li>
+</ul>
+
+<h2>6. Resultados</h2>
+
+<h3>6.1 Cumplimiento de requisitos</h3>
+<table>
+  <tr><th>Requisito</th><th>Resultado observado</th></tr>
+  <tr><td>RF1 — Video en vivo</td><td>Cumplido. La imagen se actualiza continuamente sin congelar la ventana.</td></tr>
+  <tr><td>RF2 — Detección y estado</td><td>Cumplido. Recuadro rojo para rostros no reconocidos y verde con nombre para autorizados.</td></tr>
+  <tr><td>RF3 — Altas</td><td>Cumplido. Captura de cinco muestras, guardado de firma y fotografía.</td></tr>
+  <tr><td>RF4 — Bajas</td><td>Cumplido. Eliminación de firmas y foto, con efecto inmediato.</td></tr>
+  <tr><td>RF5 — Registro</td><td>Cumplido. Eventos con fecha, hora, identidad y distancia; Anti-repetición de 3 segundos.</td></tr>
+  <tr><td>RF6 — Contraseña</td><td>Cumplido. Acceso denegado con valor incorrecto y hash almacenado.</td></tr>
+  <tr><td>RNF1 a RNF4</td><td>Cumplidos en el entorno de prueba (Linux); el diseño prevé el comportamiento en los demás sistemas.</td></tr>
+</table>
+
+<h3>6.2 Evidencia visual del procesamiento</h3>
+<p>La Figura 4 muestra un frame real capturado durante las pruebas y procesado por el sistema. Se aprecia el
+rectángulo delimitador del rostro y la etiqueta <strong>NO AUTORIZADO</strong>, resultado esperado cuando la
+persona no se encuentra registrada o cuando aún no existen firmas en el sistema. Esta imagen confirma que la
+detección y el dibujo de anotaciones funcionan incluso antes de realizar el primer alta.</p>
+
+<p align="center"><img src="figura4_deteccion.png" alt="Frame procesado con recuadro de detección"></p>
+<p align="center" class="pie">Figura 4. Frame procesado: recuadro rojo y etiqueta de no autorización sobre un rostro detectado.</p>
+
+<h3>6.3 Desempeño de los modelos de detección</h3>
+<p>Se cronometró la detección sobre una imagen de 640 × 480 píxeles con un rostro inclinado y parcialmente
+sombreado. Los resultados justifican la selección del modelo CNN a escala reducida.</p>
+
+<table>
+  <tr><th>Modelo</th><th>Escala del frame</th><th>Rostros detectados</th><th>Tiempo aproximado</th></tr>
+  <tr><td>HOG</td><td>25 %</td><td>0</td><td>0.008 s</td></tr>
+  <tr><td>HOG</td><td>50 %</td><td>0</td><td>0.019 s</td></tr>
+  <tr><td>HOG</td><td>100 %</td><td>0</td><td>0.037 s</td></tr>
+  <tr><td>CNN</td><td>25 %</td><td>1</td><td>0.076 s</td></tr>
+  <tr><td>CNN</td><td>50 %</td><td>1</td><td>0.235 s</td></tr>
+  <tr><td>CNN</td><td>100 %</td><td>1</td><td>4.090 s</td></tr>
+</table>
+
+<p>El modelo HOG falló en todas las escalas probadas, mientras que CNN detectó el rostro en todas ellas.
+La configuración adoptada —CNN sobre un frame al 25 %— ofrece el mejor equilibrio: detección correcta con
+un costo temporal compatible con la interacción en tiempo real.</p>
+
+<h3>6.4 Pruebas automatizadas y de ejecución</h3>
+<ul>
+  <li>Se ejecutaron tres pruebas unitarias sobre contraseña, altas y bajas, y registro de accesos:
+      <strong>3 de 3 superadas</strong>.</li>
+  <li>Se verificó el arranque real de la interfaz con cámara, confirmando la creación de los hilos y la
+      actualización del indicador de estado a <em>NO AUTORIZADO</em> al detectar un rostro.</li>
+  <li>Se comprobó la visibilidad de los controles en las tres ventanas: principal, panel de gestión y diálogo
+      de captura.</li>
+  <li>Se validó la pausa y reactivación de la cámara al abrir y cerrar el diálogo de alta.</li>
+</ul>
+
+<h2>7. Análisis y Discusión</h2>
+
+<h3>7.1 Interpretación de los resultados</h3>
+<p>Los resultados confirman que la arquitectura propuesta cumple los objetivos planteados. La separación
+entre captura, análisis y presentación permitió mantener una interfaz fluida incluso cuando la detección
+requiere varias decenas de milisegundos. La adopción del modelo CNN resolvió la limitación observada con
+HOG en condiciones adversas de iluminación y pose, sin comprometer la fluidez gracias a la reducción previa
+del frame.</p>
+
+<p>Un aspecto relevante es el dibujo del recuadro aun cuando no existen firmas registradas.Este comportamiento
+hace que el sistema sea comprensible desde el primer uso: el usuario observa que el rostro está siendo
+detectado y que el acceso se deniega por falta de autorización, en lugar de percibir una cámara inactiva.</p>
+
+<h3>7.2 Fortalezas</h3>
+<ul>
+  <li>Arquitectura modular y fácil de extender.</li>
+  <li>Detección robusta en condiciones no ideales de iluminación y orientación.</li>
+  <li>Administración de accesos sin necesidad de reiniciar el proceso.</li>
+  <li>Historial legible y auditable de los intentos de acceso.</li>
+  <li>Portabilidad basada en rutas relativas y dependencias declaradas.</li>
+</ul>
+
+<h3>7.3 Limitaciones</h3>
+<ul>
+  <li>No se implementa detección de vida, por lo que una fotografía podría intentar engañar al sistema.</li>
+  <li>La precisión depende de la calidad de las capturas iniciales y de la iluminación del entorno.</li>
+  <li>La contraseña de fábrica es de prueba y debe sustituirse en un despliegue real.</li>
+  <li>La información biométrica se guarda sin cifrar; la protección depende de los permisos del sistema.</li>
+  <li>El umbral de similitud es global y puede requerir ajuste en cada instalación.</li>
+</ul>
+
+<h3>7.4 Comparación con enfoques relacionados</h3>
+<p>Frente a sistemas que emplean servicios de reconocimiento en la nube, esta solución privilegia la
+privacidad y el funcionamiento sin conexión. Frente a implementaciones que usan detectores clásicos, la
+elección de CNN mejora la tasa de detección en escenas difíciles. Respecto a las soluciones que requieren
+bases de datos externas, el almacenamiento en archivos reduce la complejidad de instalación, aunque limita
+la escalabilidad a un único equipo.</p>
+
+<h3>7.5 Recomendaciones</h3>
+<ul>
+  <li>Capturar las muestras de alta con luz frontal y variaciones leves de ángulo.</li>
+  <li>Ajustar la tolerancia gradualmente según los falsos aceptados y falsos rechazos observados.</li>
+  <li>Cambiar la contraseña y restringir los permisos de la carpeta de datos en entornos productivos.</li>
+  <li>Revocar periódicamente el acceso de personas que ya no deben tenerlo.</li>
+  <li>Conservar copias de seguridad de la carpeta de datos, que contiene toda la información biométrica.</li>
+</ul>
+
+<h2>8. Conclusiones</h2>
+
+<p>Se diseñó e implementó un sistema de control de acceso biométrico facial que cumple con los requisitos
+funcionales y no funcionales definidos. La aplicación muestra el video en vivo, identifica visualmente el
+estado de autorización, administra altas y bajas mediante un panel protegido y conserva un registro de los
+intentos de acceso.</p>
+
+<p>La experiencia de desarrollo evidenció que la elección del modelo de detección incide de forma decisiva
+en la utilidad percibida: un detector rápido pero incapaz de encontrar el rostro produce una interfaz que
+parece no funcionar. La combinación de CNN a escala reducida, procesamiento en segundo plano y anotación
+permanente de los rostros detectados resolvió ese problema.</p>
+
+<p>Como trabajo futuro se plantea incorporar detección de vida para impedir suplantaciones, cifrar el
+almacenamiento biométrico, añadir varios niveles de usuario con permisos diferenciados, generar
+estadísticas a partir del registro de accesos y adaptar la interfaz a dispositivos móviles o pantallas táctiles.</p>
+
+<h2>9. Referencias</h2>
+
+<ol>
+  <li>King, D. E. (2009). Dlib-ML: A Machine Learning Toolkit. <em>Journal of Machine Learning Research</em>, 10, 1755–1758.</li>
+  <li>Bradski, G. (2000). The OpenCV Library. <em>Dr. Dobb's Journal of Software Tools</em>.</li>
+  <li>Schroff, F., Kalenichenko, D. y Philbin, J. (2015). FaceNet: A Unified Embedding for Face Recognition and Clustering. <em>Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition</em>.</li>
+  <li>Ageev, A. (2017). <em>face_recognition: the world's simplest facial recognition API for Python and the command line</em>. Recuperado de https://github.com/ageitgey/face_recognition</li>
+  <li>Turk, M. y Pentland, A. (1991). Eigenfaces for Recognition. <em>Journal of Cognitive Neuroscience</em>, 3(1), 71–86.</li>
+  <li>Viola, P. y Jones, M. (2001). Rapid Object Detection using a Boosted Cascade of Simple Features. <em>Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition</em>.</li>
+  <li>Python Software Foundation. (2026). <em>Documentación de tkinter</em>. Recuperado de https://docs.python.org/3/library/tkinter.html</li>
+  <li>OpenCV Team. (2026). <em>OpenCV documentation</em>. Recuperado de https://docs.opencv.org/</li>
+  <li>Repositorio del proyecto (2026). <em>Facial-recognition</em>. Recuperado de https://github.com/Ripinvenus/Facial-recognition</li>
+</ol>
+
+<h2 class="salto">10. Recursos del proyecto</h2>
+
+<p>Todos los recursos desarrollados se encuentran en el repositorio público del proyecto. La liga principal
+es la siguiente:</p>
+
+<p class="enlace"><a href="https://github.com/Ripinvenus/Facial-recognition">https://github.com/Ripinvenus/Facial-recognition</a></p>
+
+<p>A continuación se indican las ubicaciones específicas de cada recurso solicitado:</p>
+
+<table>
+  <tr><th>Recurso</th><th>Descripción</th><th>Liga</th></tr>
+  <tr>
+    <td><strong>A. Reporte técnico</strong></td>
+    <td>El presente documento, en formato PDF.</td>
+    <td><span class="enlace">Reporte Tecnico.pdf</span> (archivo local del proyecto)</td>
+  </tr>
+  <tr>
+    <td><strong>B. Código fuente</strong></td>
+    <td>Todos los programas desarrollados y comentados: módulos de lógica, interfaz y configuración.</td>
+    <td><span class="enlace"><a href="https://github.com/Ripinvenus/Facial-recognition/tree/main/src">https://github.com/Ripinvenus/Facial-recognition/tree/main/src</a></span><br>
+        <span class="enlace"><a href="https://github.com/Ripinvenus/Facial-recognition/blob/main/main.py">.../blob/main/main.py</a></span><br>
+        <span class="enlace"><a href="https://github.com/Ripinvenus/Facial-recognition/blob/main/config.py">.../blob/main/config.py</a></span></td>
+  </tr>
+  <tr>
+    <td><strong>C. Ejecutable e instrucciones de uso</strong></td>
+    <td>Punto de entrada <span class="enlace">main.py</span>, ejecutable con Python dentro del entorno virtual; instrucciones de instalación y operación.</td>
+    <td><span class="enlace"><a href="https://github.com/Ripinvenus/Facial-recognition/blob/main/main.py">https://github.com/Ripinvenus/Facial-recognition/blob/main/main.py</a></span><br>
+        <span class="enlace"><a href="https://github.com/Ripinvenus/Facial-recognition/blob/main/README.md">.../blob/main/README.md</a></span></td>
+  </tr>
+  <tr>
+    <td><strong>D. Datos e imágenes</strong></td>
+    <td>Carpeta de datos: fotografías de referencia, firmas faciales y registro de accesos.</td>
+    <td><span class="enlace"><a href="https://github.com/Ripinvenus/Facial-recognition/tree/main/data">https://github.com/Ripinvenus/Facial-recognition/tree/main/data</a></span></td>
+  </tr>
+  <tr>
+    <td><strong>E. Manual de usuario</strong></td>
+    <td>Guía breve de operación: instalación, pantalla principal, altas, bajas, registro y solución de problemas.</td>
+    <td><span class="enlace"><a href="https://github.com/Ripinvenus/Facial-recognition/blob/main/Manual%20de%20usuario.md">https://github.com/Ripinvenus/Facial-recognition/blob/main/Manual%20de%20usuario.md</a></span></td>
+  </tr>
+</table>
+
+<div class="nota">
+  <p><strong>Nota sobre el ejecutable:</strong> el proyecto se distribuye como aplicación Python. Para
+  ejecutarlo, crear el entorno virtual, instalar las dependencias listadas en
+  <span class="enlace">requirements.txt</span> y ejecutar <span class="enlace">main.py</span>. No se requiere
+  un instalador independiente. Las instrucciones completas están en el README y en el Manual de usuario.</p>
+</div>
+
+<p style="text-align:center; margin-top:2em;" class="etiqueta">Fin del reporte técnico</p>
+
+</body>
+</html>
