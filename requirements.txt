@@ -1,0 +1,9 @@
+# Dependencias del proyecto (instalar dentro del entorno virtual)
+face-recognition>=1.3.0
+dlib>=19.24
+opencv-python>=4.8
+numpy>=1.24
+Pillow>=10.0
+
+# Nota: tkinter viene incluido con Python en la mayoría de instalaciones.
+# En Linux, si falta, instalar el paquete del sistema "python3-tk".

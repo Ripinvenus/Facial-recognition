@@ -1,6 +1,6 @@
 __pycache__/
-*.py[cod]
+# *.py[cod]
 venv/
 
 # Datos biométricos: no versionar fotos ni registros personales
-data/
+# data/
