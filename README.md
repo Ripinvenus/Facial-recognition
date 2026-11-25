@@ -1,5 +1,8 @@
 # Control de Acceso Biométrico (reconocimiento facial)
 
+## URL del repositorio: https://github.com/Ripinvenus/Facial-recognition 
+
+
 Aplicación de escritorio con interfaz gráfica que verifica en tiempo real si una
 persona está autorizada usando reconocimiento facial, y permite dar de alta o
 baja a las personas desde un panel protegido con contraseña. Incluye un registro
